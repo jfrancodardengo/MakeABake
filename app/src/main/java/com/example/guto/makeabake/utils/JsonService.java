@@ -1,5 +1,8 @@
 package com.example.guto.makeabake.utils;
 
+import android.os.AsyncTask;
+import android.util.Log;
+
 import com.example.guto.makeabake.model.IngredientsModel;
 import com.example.guto.makeabake.model.RecipeModel;
 import com.example.guto.makeabake.model.StepsModel;
@@ -8,83 +11,101 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by GUTO on 28/12/2017.
  */
 
-public class JsonService {
-    private static ArrayList<IngredientsModel> sIngredientsModels = new ArrayList<IngredientsModel>();
-    private static ArrayList<StepsModel> sStepsModels = new ArrayList<StepsModel>();
-    private final String jsonData;
-    private ArrayList<RecipeModel> mRecipeModels = new ArrayList<RecipeModel>();
+public class JsonService{
+    public static final String JSON_URL = "https://d17h27t6h515a5.cloudfront.net/topher/2017/May/59121517_baking/baking.json";
 
-    public JsonService(ArrayList<RecipeModel> mRecipeModels, String jsonData) {
-        this.mRecipeModels = mRecipeModels;
-        this.jsonData = jsonData;
+    public JsonService() {
     }
 
-    public Boolean parse() {
-        mRecipeModels.clear();
-        sStepsModels.clear();
-        sIngredientsModels.clear();
-        RecipeModel recipeModel;
-        IngredientsModel ingredientsModel;
-        StepsModel stepsModel;
+    public static ArrayList<RecipeModel> getJsonRecipe(String jsonData) {
+        ArrayList<RecipeModel> recipeModels = new ArrayList<>();
+        List<IngredientsModel> ingredientsModels = null;
+        List<StepsModel> stepsModels = null;
+
+        if(jsonData == null || jsonData.isEmpty()) return null;
+
         try {
-            JSONObject jsonObject;
-            JSONObject reader = new JSONObject(jsonData);
-            int idRecipe = reader.getInt("id");
-            String nameRecipe = reader.getString("name");
-            JSONArray jsonArrayIngredients = reader.getJSONArray("ingredients");
+            JSONArray baseArray = new JSONArray(jsonData);
 
-            for (int i = 0; i < jsonArrayIngredients.length(); i++) {
-                jsonObject = jsonArrayIngredients.getJSONObject(i);
-                int quantity = jsonObject.getInt("quantity");
-                String measure = jsonObject.getString("measure");
-                String ingredient = jsonObject.getString("ingredient");
+            for (int i = 0; i < baseArray.length(); i++) {
+                ingredientsModels = new ArrayList<>();
+                stepsModels = new ArrayList<>();
+                JSONObject jsonObject = baseArray.getJSONObject(i);
+                int idRecipe = jsonObject.getInt("id");
+                String nameRecipe = jsonObject.getString("name");
 
-                ingredientsModel = new IngredientsModel();
-                ingredientsModel.setQuantity(quantity);
-                ingredientsModel.setMeasure(measure);
-                ingredientsModel.setIngredient(ingredient);
-                sIngredientsModels.add(ingredientsModel);
+                JSONArray jsonArrayIngredients = jsonObject.getJSONArray("ingredients");
+                for (int j = 0; j < jsonArrayIngredients.length(); j++) {
+                    JSONObject current = jsonArrayIngredients.getJSONObject(j);
+                    int quantity = current.getInt("quantity");
+                    String measure = current.getString("measure");
+                    String ingredient = current.getString("ingredient");
+
+                    ingredientsModels.add(new IngredientsModel(quantity,measure,ingredient));
+                }
+
+                JSONArray jsonArraySteps = jsonObject.getJSONArray("steps");
+                for (int k = 0; k < jsonArraySteps.length(); k++) {
+                    JSONObject current = jsonArraySteps.getJSONObject(k);
+                    int idStep = current.getInt("id");
+                    String shortDescription = current.getString("shortDescription");
+                    String description = current.getString("description");
+                    String videoUrl = current.getString("videoURL");
+                    String thumbnailUrl = current.getString("thumbnailURL");
+
+                    stepsModels.add(new StepsModel(idStep,shortDescription,description,videoUrl,thumbnailUrl));
+                }
+
+                int servings = jsonObject.getInt("servings");
+                String image = jsonObject.getString("image");
+
+                recipeModels.add(new RecipeModel(idRecipe,nameRecipe,ingredientsModels,stepsModels,servings,image));
             }
-
-            JSONArray jsonArraySteps = reader.getJSONArray("steps");
-            for (int j = 0; j < jsonArraySteps.length(); j++) {
-                jsonObject = jsonArraySteps.getJSONObject(j);
-                int idStep = jsonObject.getInt("id");
-                String shortDescription = jsonObject.getString("shortDescription");
-                String description = jsonObject.getString("description");
-                String videoUrl = jsonObject.getString("videoURL");
-                String thumbnailUrl = jsonObject.getString("thumbnailURL");
-
-                stepsModel = new StepsModel();
-                stepsModel.setIdStep(idStep);
-                stepsModel.setShortDescription(shortDescription);
-                stepsModel.setDescription(description);
-                stepsModel.setVideoUrl(videoUrl);
-                stepsModel.setThumbnailUrl(thumbnailUrl);
-                sStepsModels.add(stepsModel);
-            }
-
-            int servings = reader.getInt("servings");
-            String image = reader.getString("image");
-
-            recipeModel = new RecipeModel();
-            recipeModel.setIdRecipe(idRecipe);
-            recipeModel.setName(nameRecipe);
-            recipeModel.setServings(servings);
-            recipeModel.setImage(image);
-            mRecipeModels.add(recipeModel);
 
         } catch (JSONException e) {
             e.printStackTrace();
-            return false;
         }
-        return true;
+        return recipeModels;
+    }
+
+    public static String download(String url) {
+        Object connection = ConnectService.connect(url);
+        if (connection.toString().startsWith("Error")) {
+            return connection.toString();
+        }
+        try {
+            HttpURLConnection con = (HttpURLConnection) connection;
+            if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                InputStream is = new BufferedInputStream(con.getInputStream());
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                String line;
+                StringBuilder jsonData = new StringBuilder();
+
+                while ((line = br.readLine()) != null) {
+                    jsonData.append(line).append("\n");
+                }
+                br.close();
+                is.close();
+                return jsonData.toString();
+            } else {
+                return String.format("Error %s", con.getResponseMessage());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return String.format("Error %s", e.getMessage());
+        }
     }
 }

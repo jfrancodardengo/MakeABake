@@ -28,6 +28,14 @@ public class StepsModel implements Parcelable {
     public StepsModel() {
     }
 
+    public StepsModel(int mIdStep, String mShortDescription, String mDescription, String mVideoUrl, String mThumbnailUrl) {
+        this.mIdStep = mIdStep;
+        this.mShortDescription = mShortDescription;
+        this.mDescription = mDescription;
+        this.mVideoUrl = mVideoUrl;
+        this.mThumbnailUrl = mThumbnailUrl;
+    }
+
     protected StepsModel(Parcel in) {
         mIdStep = in.readInt();
         mShortDescription = in.readString();

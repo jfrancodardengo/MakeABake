@@ -3,6 +3,9 @@ package com.example.guto.makeabake.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by GUTO on 28/12/2017.
  */
@@ -21,15 +24,32 @@ public class RecipeModel implements Parcelable {
     };
     private int mIdRecipe;
     private String mNameRecipe;
+    private List<IngredientsModel> mIngredients = null;
+    private List<StepsModel> mSteps = null;
     private int mServings;
     private String mImage;
 
     public RecipeModel() {
     }
 
+    public RecipeModel(int mIdRecipe, String mNameRecipe, List<IngredientsModel> mIngredients, List<StepsModel> mSteps, int mServings, String mImage) {
+        this.mIdRecipe = mIdRecipe;
+        this.mNameRecipe = mNameRecipe;
+        this.mIngredients = mIngredients;
+        this.mSteps = mSteps;
+        this.mServings = mServings;
+        this.mImage = mImage;
+    }
+
     protected RecipeModel(Parcel in) {
         mIdRecipe = in.readInt();
         mNameRecipe = in.readString();
+        mIngredients = in.createTypedArrayList(IngredientsModel.CREATOR);
+//        mIngredients = new ArrayList<IngredientsModel>();
+//        in.readList(this.mIngredients,IngredientsModel.class.getClassLoader());
+        mSteps = in.createTypedArrayList(StepsModel.CREATOR);
+//        mSteps = new ArrayList<StepsModel>();
+//        in.readList(this.mSteps,StepsModel.class.getClassLoader());
         mServings = in.readInt();
         mImage = in.readString();
     }
@@ -38,32 +58,24 @@ public class RecipeModel implements Parcelable {
         return mIdRecipe;
     }
 
-    public void setIdRecipe(int mIdRecipe) {
-        this.mIdRecipe = mIdRecipe;
-    }
-
     public String getName() {
         return mNameRecipe;
-    }
-
-    public void setName(String nName) {
-        this.mNameRecipe = nName;
     }
 
     public int getServings() {
         return mServings;
     }
 
-    public void setServings(int nServings) {
-        this.mServings = nServings;
-    }
-
     public String getImage() {
         return mImage;
     }
 
-    public void setImage(String mImage) {
-        this.mImage = mImage;
+    public List<IngredientsModel> getIngredients() {
+        return mIngredients;
+    }
+
+    public List<StepsModel> getSteps() {
+        return mSteps;
     }
 
     @Override
@@ -75,6 +87,8 @@ public class RecipeModel implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeInt(mIdRecipe);
         parcel.writeString(mNameRecipe);
+        parcel.writeTypedList(mIngredients);
+        parcel.writeTypedList(mSteps);
         parcel.writeInt(mServings);
         parcel.writeString(mImage);
     }

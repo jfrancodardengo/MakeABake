@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MakeABake</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="action_detail">detalhes</string>
+    <string name="label_servings">Serve</string>
 </resources>

@@ -26,6 +26,12 @@ public class IngredientsModel implements Parcelable {
     public IngredientsModel() {
     }
 
+    public IngredientsModel(int mQuantity, String mMeasure, String mIngredient) {
+        this.mQuantity = mQuantity;
+        this.mMeasure = mMeasure;
+        this.mIngredient = mIngredient;
+    }
+
     protected IngredientsModel(Parcel in) {
         mQuantity = in.readInt();
         mMeasure = in.readString();
