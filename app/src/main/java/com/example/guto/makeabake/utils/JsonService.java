@@ -30,8 +30,8 @@ public class JsonService{
     public JsonService() {
     }
 
-    public static ArrayList<RecipeModel> getJsonRecipe(String jsonData) {
-        ArrayList<RecipeModel> recipeModels = new ArrayList<>();
+    public static List<RecipeModel> getJsonRecipe(String jsonData) {
+        List<RecipeModel> recipeModels = new ArrayList<>();
         List<IngredientsModel> ingredientsModels = null;
         List<StepsModel> stepsModels = null;
 
